@@ -60,7 +60,8 @@ public class AppleMapController : NSObject, FlutterPlatformView, MKMapViewDelega
         
         self.mapView.delegate = self
         self.mapView.setCenterCoordinate(initialCameraPosition, animated: false)
-        self.setMethodCallHandlers()
+        weak var weakSelf = self
+        self.channel.setMethodCallHandler({ weakSelf?.handle($0, result: $1) })()
         
         if let annotationsToAdd: NSArray = args["annotationsToAdd"] as? NSArray {
             self.annotationController.annotationsToAdd(annotations: annotationsToAdd)
@@ -134,116 +135,114 @@ public class AppleMapController : NSObject, FlutterPlatformView, MKMapViewDelega
         }
     }
     
-    private func setMethodCallHandlers() {
-        channel.setMethodCallHandler({(call: FlutterMethodCall, result: FlutterResult) -> Void in
-            if let args :Dictionary<String, Any> = call.arguments as? Dictionary<String,Any> {
-                switch(call.method) {
-                case "annotations#update":
-                    if let annotationsToAdd = args["annotationsToAdd"] as? NSArray {
-                        if annotationsToAdd.count > 0 {
-                            self.annotationController.annotationsToAdd(annotations: annotationsToAdd)
-                        }
+    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        if let args :Dictionary<String, Any> = call.arguments as? Dictionary<String,Any> {
+            switch(call.method) {
+            case "annotations#update":
+                if let annotationsToAdd = args["annotationsToAdd"] as? NSArray {
+                    if annotationsToAdd.count > 0 {
+                        self.annotationController.annotationsToAdd(annotations: annotationsToAdd)
                     }
-                    if let annotationsToChange = args["annotationsToChange"] as? NSArray {
-                        if annotationsToChange.count > 0 {
-                            self.annotationController.annotationsToChange(annotations: annotationsToChange)
-                        }
-                    }
-                    if let annotationsToDelete = args["annotationIdsToRemove"] as? NSArray {
-                        if annotationsToDelete.count > 0 {
-                            self.annotationController.annotationsIdsToRemove(annotationIds: annotationsToDelete)
-                        }
-                    }
-                    result(nil)
-                case "annotations#showInfoWindow":
-                    self.annotationController.showAnnotation(with: args["annotationId"] as! String)
-                case "annotations#hideInfoWindow":
-                    self.annotationController.hideAnnotation(with: args["annotationId"] as! String)
-                case "annotations#isInfoWindowShown":
-                    result(self.annotationController.isAnnotationSelected(with: args["annotationId"] as! String))
-                case "polylines#update":
-                    if let polylinesToAdd: NSArray = args["polylinesToAdd"] as? NSArray {
-                        self.polylineController.addPolylines(polylineData: polylinesToAdd)
-                    }
-                    if let polylinesToChange: NSArray = args["polylinesToChange"] as? NSArray {
-                        self.polylineController.changePolylines(polylineData: polylinesToChange)
-                    }
-                    if let polylinesToRemove: NSArray = args["polylineIdsToRemove"] as? NSArray {
-                        self.polylineController.removePolylines(polylineIds: polylinesToRemove)
-                    }
-                    result(nil);
-                case "polygons#update":
-                    if let polyligonsToAdd: NSArray = args["polygonsToAdd"] as? NSArray {
-                        self.polygonController.addPolygons(polygonData: polyligonsToAdd)
-                    }
-                    if let polygonsToChange: NSArray = args["polygonsToChange"] as? NSArray {
-                        self.polygonController.changePolygons(polygonData: polygonsToChange)
-                    }
-                    if let polygonsToRemove: NSArray = args["polygonIdsToRemove"] as? NSArray {
-                        self.polygonController.removePolygons(polygonIds: polygonsToRemove)
-                    }
-                    result(nil);
-                case "circles#update":
-                    if let circlesToAdd: NSArray = args["circlesToAdd"] as? NSArray {
-                        self.circleController.addCircles(circleData: circlesToAdd)
-                    }
-                    if let circlesToChange: NSArray = args["circlesToChange"] as? NSArray {
-                        self.circleController.changeCircles(circleData: circlesToChange)
-                    }
-                    if let circlesToRemove: NSArray = args["circleIdsToRemove"] as? NSArray {
-                        self.circleController.removeCircles(circleIds: circlesToRemove)
-                    }
-                    result(nil);
-                case "map#update":
-                    self.mapView.interpretOptions(options: args["options"] as! Dictionary<String, Any>)
-                case "camera#animate":
-                    let positionData :Dictionary<String, Any> = self.toPositionData(data: args["cameraUpdate"] as! Array<Any>, animated: true)
-                    if !positionData.isEmpty {
-                        self.mapView.setCenterCoordinate(positionData, animated: true)
-                    }
-                    result(nil)
-                case "camera#move":
-                    let positionData :Dictionary<String, Any> = self.toPositionData(data: args["cameraUpdate"] as! Array<Any>, animated: false)
-                    if !positionData.isEmpty {
-                        self.mapView.setCenterCoordinate(positionData, animated: false)
-                    }
-                    result(nil)
-                default:
-                    result(FlutterMethodNotImplemented)
-                    return
                 }
-            } else {
-                switch call.method {
-                case "map#getVisibleRegion":
-                    result(self.mapView.getVisibleRegion())
-                case "map#isCompassEnabled":
-                    if #available(iOS 9.0, *) {
-                        result(self.mapView.showsCompass)
-                    } else {
-                        result(false)
+                if let annotationsToChange = args["annotationsToChange"] as? NSArray {
+                    if annotationsToChange.count > 0 {
+                        self.annotationController.annotationsToChange(annotations: annotationsToChange)
                     }
-                case "map#isPitchGesturesEnabled":
-                    result(self.mapView.isPitchEnabled)
-                case "map#isScrollGesturesEnabled":
-                    result(self.mapView.isScrollEnabled)
-                case "map#isZoomGesturesEnabled":
-                    result(self.mapView.isZoomEnabled)
-                case "map#isRotateGesturesEnabled":
-                    result(self.mapView.isRotateEnabled)
-                case "map#isMyLocationButtonEnabled":
-                    result(self.mapView.isMyLocationButtonShowing ?? false)
-                case "map#getMinMaxZoomLevels":
-                    result([self.mapView.minZoomLevel, self.mapView.maxZoomLevel])
-                case "camera#getZoomLevel":
-                    result(self.mapView.calculatedZoomLevel)
-                default:
-                    result(FlutterMethodNotImplemented)
-                    return
                 }
+                if let annotationsToDelete = args["annotationIdsToRemove"] as? NSArray {
+                    if annotationsToDelete.count > 0 {
+                        self.annotationController.annotationsIdsToRemove(annotationIds: annotationsToDelete)
+                    }
+                }
+                result(nil)
+            case "annotations#showInfoWindow":
+                self.annotationController.showAnnotation(with: args["annotationId"] as! String)
+            case "annotations#hideInfoWindow":
+                self.annotationController.hideAnnotation(with: args["annotationId"] as! String)
+            case "annotations#isInfoWindowShown":
+                result(self.annotationController.isAnnotationSelected(with: args["annotationId"] as! String))
+            case "polylines#update":
+                if let polylinesToAdd: NSArray = args["polylinesToAdd"] as? NSArray {
+                    self.polylineController.addPolylines(polylineData: polylinesToAdd)
+                }
+                if let polylinesToChange: NSArray = args["polylinesToChange"] as? NSArray {
+                    self.polylineController.changePolylines(polylineData: polylinesToChange)
+                }
+                if let polylinesToRemove: NSArray = args["polylineIdsToRemove"] as? NSArray {
+                    self.polylineController.removePolylines(polylineIds: polylinesToRemove)
+                }
+                result(nil);
+            case "polygons#update":
+                if let polyligonsToAdd: NSArray = args["polygonsToAdd"] as? NSArray {
+                    self.polygonController.addPolygons(polygonData: polyligonsToAdd)
+                }
+                if let polygonsToChange: NSArray = args["polygonsToChange"] as? NSArray {
+                    self.polygonController.changePolygons(polygonData: polygonsToChange)
+                }
+                if let polygonsToRemove: NSArray = args["polygonIdsToRemove"] as? NSArray {
+                    self.polygonController.removePolygons(polygonIds: polygonsToRemove)
+                }
+                result(nil);
+            case "circles#update":
+                if let circlesToAdd: NSArray = args["circlesToAdd"] as? NSArray {
+                    self.circleController.addCircles(circleData: circlesToAdd)
+                }
+                if let circlesToChange: NSArray = args["circlesToChange"] as? NSArray {
+                    self.circleController.changeCircles(circleData: circlesToChange)
+                }
+                if let circlesToRemove: NSArray = args["circleIdsToRemove"] as? NSArray {
+                    self.circleController.removeCircles(circleIds: circlesToRemove)
+                }
+                result(nil);
+            case "map#update":
+                self.mapView.interpretOptions(options: args["options"] as! Dictionary<String, Any>)
+            case "camera#animate":
+                let positionData :Dictionary<String, Any> = self.toPositionData(data: args["cameraUpdate"] as! Array<Any>, animated: true)
+                if !positionData.isEmpty {
+                    self.mapView.setCenterCoordinate(positionData, animated: true)
+                }
+                result(nil)
+            case "camera#move":
+                let positionData :Dictionary<String, Any> = self.toPositionData(data: args["cameraUpdate"] as! Array<Any>, animated: false)
+                if !positionData.isEmpty {
+                    self.mapView.setCenterCoordinate(positionData, animated: false)
+                }
+                result(nil)
+            default:
+                result(FlutterMethodNotImplemented)
+                return
             }
-        })
+        } else {
+            switch call.method {
+            case "map#getVisibleRegion":
+                result(self.mapView.getVisibleRegion())
+            case "map#isCompassEnabled":
+                if #available(iOS 9.0, *) {
+                    result(self.mapView.showsCompass)
+                } else {
+                    result(false)
+                }
+            case "map#isPitchGesturesEnabled":
+                result(self.mapView.isPitchEnabled)
+            case "map#isScrollGesturesEnabled":
+                result(self.mapView.isScrollEnabled)
+            case "map#isZoomGesturesEnabled":
+                result(self.mapView.isZoomEnabled)
+            case "map#isRotateGesturesEnabled":
+                result(self.mapView.isRotateEnabled)
+            case "map#isMyLocationButtonEnabled":
+                result(self.mapView.isMyLocationButtonShowing ?? false)
+            case "map#getMinMaxZoomLevels":
+                result([self.mapView.minZoomLevel, self.mapView.maxZoomLevel])
+            case "camera#getZoomLevel":
+                result(self.mapView.calculatedZoomLevel)
+            default:
+                result(FlutterMethodNotImplemented)
+                return
+            }
+        }
     }
-    
+
     private func toPositionData(data: Array<Any>, animated: Bool) -> Dictionary<String, Any> {
         var positionData: Dictionary<String, Any> = [:]
         if let update: String = data[0] as? String {

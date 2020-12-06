@@ -61,7 +61,7 @@ public class AppleMapController : NSObject, FlutterPlatformView, MKMapViewDelega
         self.mapView.delegate = self
         self.mapView.setCenterCoordinate(initialCameraPosition, animated: false)
         weak var weakSelf = self
-        self.channel.setMethodCallHandler({ weakSelf?.handle($0, result: $1) })()
+        self.channel.setMethodCallHandler({ weakSelf?.handle($0, result: $1) })
         
         if let annotationsToAdd: NSArray = args["annotationsToAdd"] as? NSArray {
             self.annotationController.annotationsToAdd(annotations: annotationsToAdd)

@@ -1,4 +1,12 @@
-# apple_maps_flutter
+# apple_maps_flutter - Replaced hashValues with Object.hash
+
+Please add this code in pubspec to get changes.
+```dart
+  apple_maps_flutter:
+    git:
+      url: https://github.com/Anjula/apple_maps_flutter.git
+      ref: cb853b3f3b86b3453559bf35f632696bb0357234
+```
 
 [![codecov](https://codecov.io/gh/LuisThein/apple_maps_flutter/branch/master/graph/badge.svg)](https://codecov.io/gh/LuisThein/apple_maps_flutter)
 
